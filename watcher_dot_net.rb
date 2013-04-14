@@ -2,7 +2,6 @@
 #http://www.github.com/amirrajan/specwatchr
 #Copyright (c) 2011 Amir Rajan, Matt Florence
 #Copyright (c) 2011 The NSpec Development Team
-require 'pry'
 class GrowlNotifier
   def self.growl_path
     @@growl_path
