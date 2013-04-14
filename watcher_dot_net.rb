@@ -724,7 +724,7 @@ class MSPECTestRunner < TestRunner
     @sh = CommandShell.new
     @failed_tests = Array.new
     @status_by_dll = Hash.new
-    @@mspec_path = ".\\packages\\Machine.Specifications.0.5.12\\tools\\mspec-clr4.exe"
+    @@mspec_path = "packages\\Machine.Specifications.0.5.12\\tools\\mspec-clr4.exe"
   end
 
   def self.mspec_path

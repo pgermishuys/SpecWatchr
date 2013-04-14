@@ -98,7 +98,7 @@ if you choose :MSPECTestRunner as your :test_runner
 this is the execution path for mspec-clr4.exe
 =end
 MSPECTestRunner.mspec_path = 
-  '.\packages\Machine.Specifications.0.5.12\tools\mspec-clr4.exe'
+  'packages\Machine.Specifications.0.5.12\tools\mspec-clr4.exe'
 
 
 =begin
