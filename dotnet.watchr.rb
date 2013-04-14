@@ -23,7 +23,7 @@ The default behavior: specwatchr will look for a file called Rakefile.rb, if it
 finds one then it will automatically set the builder to rake builder
 =end
 
-config = { :builder => :MSBuilder, :test_runner => :NSpecRunner }
+config = { :builder => :MSBuilder, :test_runner => :MSPECTestRunner }
 
 config[:builder] = :RakeBuilder if File.exists? "Rakefile.rb" #specwatchr will use :RakeBuilder if it finds Rakefile.rb
 
@@ -84,6 +84,22 @@ this is the execution path for MSTest.exe
 =end
 MSTestRunner.ms_test_path = 
   'C:\program files (x86)\microsoft visual studio 10.0\common7\ide\mstest.exe'
+
+=begin
+ _______  _______  _______  _______  _______ 
+(       )(  ____ \(  ____ )(  ____ \(  ____ \
+| () () || (    \/| (    )|| (    \/| (    \/
+| || || || (_____ | (____)|| (__    | |      
+| |(_)| |(_____  )|  _____)|  __)   | |      
+| |   | |      ) || (      | (      | |      
+| )   ( |/\____) || )      | (____/\| (____/\
+|/     \|\_______)|/       (_______/(_______/
+if you choose :MSPECTestRunner as your :test_runner
+this is the execution path for mspec-clr4.exe
+=end
+MSPECTestRunner.mspec_path = 
+  '.\packages\Machine.Specifications.0.5.12\tools\mspec-clr4.exe'
+
 
 =begin
  _                 _       __________________
