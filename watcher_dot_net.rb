@@ -724,7 +724,7 @@ class MSPECTestRunner < TestRunner
     @sh = CommandShell.new
     @failed_tests = Array.new
     @status_by_dll = Hash.new
-    @@mspec_path = "packages\\Machine.Specifications.0.5.12\\tools\\mspec-clr4.exe"
+    @@mspec_path = ".\\packages\\Machine.Specifications.0.5.12\\tools\\mspec-clr4.exe"
   end
 
   def self.mspec_path
@@ -740,7 +740,7 @@ class MSPECTestRunner < TestRunner
 MSPECTestRunner will use the following exe to run your tests: 
 #{MSPECTestRunner.mspec_path}
 
-MSPECTestRunner for SpecWatchr uses a convension based approach for running unit tests.  Let's say you have a class called Person (located in file Person.cs).  You'll need to create a test class called describe_Person.cs (all tests associated with Person.cs should go under describe_Person.cs).  Once the test class is created, change the namespace of the class to include PersonSpec.  For example:
+MSPECTestRunner for SpecWatchr uses a convention based approach for running unit tests.  Let's say you have a class called Person (located in file Person.cs).  You'll need to create a test class called describe_Person.cs (all tests associated with Person.cs should go under describe_Person.cs).  Once the test class is created, change the namespace of the class to include PersonSpec.  For example:
 
 //here is the person class (located in Person.cs)
 public class Person 
@@ -794,7 +794,7 @@ OUTPUT
     results[:inconclusive] = false
 
     test_output.each_line do |output| 
-      results[:failed] = true if [/fail/i].any? { |pattern| output.match(pattern) }
+      results[:failed] = true if [/\((FAIL)\)/].any? { |pattern| output.match(pattern) }
       results[:inconclusive] = true if output.match(/No tests to execute/)
     end
 
@@ -807,21 +807,22 @@ OUTPUT
     specification_name = nil
     test_output.split("\n").each do |line|
       stripped_line = line
-        if(line.match(/^when/i))
-            specification_name = stripped_line
-        elsif(line.match(/fail/i))
-          in_error = true
-          last_test_item = { :name => "#{specification_name}" + stripped_line.gsub(" (FAIL)", "").gsub(" ", ""), :dll => test_dll }
-          @failed_tests << last_test_item
-          last_test_item[:errormessage] = ""
-        elsif(line.match(/should/i))
+        if(in_error and not line.match(/Failures:/) and not line.match(/\S should/i))
+          last_test_item[:errormessage] += stripped_line + "\n" if last_test_item[:errormessage]
+        elsif(line.match(/Failures:/))
           in_error = false
-          last_test_item = { :name => "#{specification_name}" + stripped_line.gsub(" (FAIL)", "").gsub(" ", ""), :dll => test_dll }
+          break
+        elsif(line.match(/^when/i))
+          specification_name = stripped_line
+        elsif(line.match(/\((FAIL)\)/))
+          in_error = true
+          last_test_item = { :name => "#{specification_name}" + "\n" + stripped_line.gsub("(FAIL)", ""), :dll => test_dll }
+          last_test_item[:errormessage] = ""
+          @failed_tests << last_test_item
+        elsif(line.match(/\S should/i))
+          in_error = false
+          last_test_item = { :name => "#{specification_name}" + stripped_line, :dll => test_dll }
           @passed_tests << last_test_item
-        elsif(in_error)
-          if not(stripped_line.to_s.empty?)
-            last_test_item[:errormessage] += stripped_line + "\n" if last_test_item[:errormessage]
-          end
         end
     end
 
@@ -872,9 +873,8 @@ OUTPUT
     @passed_tests = Array.new
     @status_by_dll.clear
     @first_failed_test = nil
-
     test_dlls.each do |test_dll|
-      test_output = @sh.execute "#{test_cmd(test_dll, test_name)}"
+      test_output = @sh.execute "#{test_cmd(test_dll, test_name.gsub(/describe_/, ""))}"
   
       set_test_status test_dll, test_output
       puts 'Test Name : ' + test_name
@@ -902,7 +902,7 @@ OUTPUT
   
   def test_cmd test_dll, test_name
     if test_name
-      return "\"#{MSPECTestRunner.mspec_path}\" #{test_dll}"
+      return "\"#{MSPECTestRunner.mspec_path}\" #{test_dll} -i #{test_name}"
     else
       return "\"#{MSPECTestRunner.mspec_path}\" #{test_dll}"
     end
@@ -936,7 +936,7 @@ class WatcherDotNet
   require 'find'
 
   EXCLUDES = [/\.dll$/, /debug/i, /TestResult.xml/, /testresults/i, /\.rb$/, /\.suo$/]
-	
+  
   def initialize folder, config 
     @folder = folder
     @sh = CommandShell.new
@@ -963,7 +963,7 @@ class WatcherDotNet
     end
 
     puts "====================== changed: #{file} ===================="
-    puts "====================== excluded ============================" if false == require_build(file)		
+    puts "====================== excluded ============================" if false == require_build(file)   
 
     if false == require_build(file)
       puts "===================== done consider ========================"
