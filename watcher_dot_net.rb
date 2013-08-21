@@ -724,7 +724,7 @@ class MSPECTestRunner < TestRunner
     @sh = CommandShell.new
     @failed_tests = Array.new
     @status_by_dll = Hash.new
-    @@mspec_path = ".\\packages\\Machine.Specifications.0.5.12\\tools\\mspec-clr4.exe"
+    @@mspec_path = ".\\packages\\Machine.Specifications.0.5.15\\tools\\mspec-clr4.exe"
   end
 
   def self.mspec_path
@@ -804,24 +804,34 @@ OUTPUT
   def parse_test_result test_dll, test_output, test_name
     last_test_item = nil
     in_error = false
-    specification_name = nil
+    start_parsing_results = false
+    specification_name = ""
     test_output.split("\n").each do |line|
       stripped_line = line
-        if(in_error and not line.match(/Failures:/) and not line.match(/\S should/i))
-          last_test_item[:errormessage] += stripped_line + "\n" if last_test_item[:errormessage]
-        elsif(line.match(/Failures:/))
+        if(line.match(/Failures:/))
+          start_parsing_results = true
+          next
+        end
+        if(line.empty?)
           in_error = false
-          break
-        elsif(line.match(/^when/i))
+          specification_name = ""
+          next
+        end
+        if(in_error)
+          last_test_item[:errormessage] += stripped_line + "\n" if last_test_item[:errormessage]
+        
+        elsif(specification_name.empty? and not line.match(/Contexts/i))
           specification_name = stripped_line
         elsif(line.match(/\((FAIL)\)/))
           in_error = true
           last_test_item = { :name => "#{specification_name}" + "\n" + stripped_line.gsub("(FAIL)", ""), :dll => test_dll }
           last_test_item[:errormessage] = ""
           @failed_tests << last_test_item
-        elsif(line.match(/\S should/i))
+        elsif(line.match(/Contexts/i))
           in_error = false
-          last_test_item = { :name => "#{specification_name}" + stripped_line, :dll => test_dll }
+          number_of_specifications = stripped_line.match(/.Specifications:../)[0]
+          number_of_specifications = number_of_specifications.gsub("Specifications:", "").squeeze(' ')
+          last_test_item = { :name => number_of_specifications, :dll => test_dll }
           @passed_tests << last_test_item
         end
     end
@@ -863,8 +873,6 @@ OUTPUT
     end
 
     @test_results += test_output + "\n"
-
-    puts @test_results
   end
 
   def execute test_name
@@ -894,7 +902,7 @@ OUTPUT
     end
 
     if(!@inconclusive && !@failed)
-      @test_results += "#{@passed_tests.count} tests ran and passed\n"
+      @test_results += "#{@passed_tests[0][:name]} tests ran and passed\n"
     end
 
     @test_results
@@ -902,7 +910,9 @@ OUTPUT
   
   def test_cmd test_dll, test_name
     if test_name
-      return "\"#{MSPECTestRunner.mspec_path}\" #{test_dll} -i #{test_name}"
+      #return "\"#{MSPECTestRunner.mspec_path}\" #{test_dll} -i #{test_name}"
+      #currently not working as intended
+      return "\"#{MSPECTestRunner.mspec_path}\" #{test_dll}"
     else
       return "\"#{MSPECTestRunner.mspec_path}\" #{test_dll}"
     end
