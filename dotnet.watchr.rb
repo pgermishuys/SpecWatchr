@@ -23,7 +23,7 @@ The default behavior: specwatchr will look for a file called Rakefile.rb, if it
 finds one then it will automatically set the builder to rake builder
 =end
 
-config = { :builder => :MSBuilder, :test_runner => :MSPECTestRunner }
+config = { :builder => :MSBuilder, :test_runner => :NSpecRunner }
 
 config[:builder] = :RakeBuilder if File.exists? "Rakefile.rb" #specwatchr will use :RakeBuilder if it finds Rakefile.rb
 
